@@ -6,6 +6,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn import metrics
 import os
 
 print("hello")
@@ -37,7 +38,7 @@ df.head(3)
 
 #df = df[df['medical_specialty'].isin(['Neurosurgery','ENT - Otolaryngology','Discharge Summary','Neurology'])]
 #df = df[df['medical_specialty'].isin(['ENT - Otolaryngology','Neurology'])]
-#df = df[df['medical_specialty'].isin(['Neurosurgery','Neurology'])]
+df = df[df['medical_specialty'].isin(['Neurosurgery','Neurology'])]
 
 shape(df,'df')
 
@@ -129,12 +130,23 @@ svc_pred = svc.predict(X_test)
 sgd_pred = sgd.predict(X_test)
 ll_pred = log_loss.predict(X_test)
 
-
+# Manually finding f1 (micro):
 gnb_score = np.count_nonzero(y_test==gnb_pred)/len(y_test)
 mnb_score = np.count_nonzero(y_test==mnb_pred)/len(y_test)
 svc_score = np.count_nonzero(y_test==svc_pred)/len(y_test)
 sgd_score = np.count_nonzero(y_test==sgd_pred)/len(y_test)
 lL_score = np.count_nonzero(y_test==ll_pred)/len(y_test)
+
+Nclass= len(df['medical_specialty'].unique())
+preds = [gnb_pred, mnb_pred, svc_pred, sgd_pred, ll_pred]
+
+if Nclass>2:
+    average_score = 'weighted'
+
+    f1s = [round(metrics.f1_score(y_test,i,average=average_score)*100,2) for i in preds]
+else:
+    # sklearn throwing errors cause how predications are shaped.. Manually finding f1
+    f1s = [round(np.count_nonzero(y_test==i)/len(i) * 100, 2) for i in preds]
 
 
 print("Gaussian NB has "+str(gnb_score*100)+"%")
@@ -148,15 +160,15 @@ def addlabels(x,y):
         plt.text(i,y[i],y[i])
 
 
-Nclass= len(df['medical_specialty'].unique())
 x_=['Gaussian NB','Multinomial NB','svm','svm with sgd','LogReg with SGD']
 scores=[gnb_score,mnb_score,svc_score,sgd_score,lL_score]
 scores = [round(i * 100,2) for i in scores]
-plt.bar(x_,scores)
-addlabels(x_,scores)
+plt.bar(x_,f1s)
+addlabels(x_,f1s)
 plt.grid(color='k', linestyle='--', linewidth=0.2)
 plt.suptitle('Classifying '+str(Nclass)+' specialities from '+str(len(df))+' samples')
-plt.ylabel('True positives', fontsize=16)
+plt.ylabel('F1 score', fontsize=16)
 plt.show()
+
 dum=1
 
