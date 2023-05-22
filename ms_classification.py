@@ -36,7 +36,7 @@ df = trim(df)
 df.head(3)
 
 #df = df[df['medical_specialty'].isin(['Neurosurgery','ENT - Otolaryngology','Discharge Summary','Neurology'])]
-df = df[df['medical_specialty'].isin(['ENT - Otolaryngology','Neurology'])]
+#df = df[df['medical_specialty'].isin(['ENT - Otolaryngology','Neurology'])]
 #df = df[df['medical_specialty'].isin(['Neurosurgery','Neurology'])]
 
 shape(df,'df')
@@ -111,35 +111,52 @@ X_array=X.toarray()
 X_train, X_test, y_train, y_test = train_test_split(X_array, y, test_size=0.5, random_state=101)
 gnb = GaussianNB()
 mnb = MultinomialNB()
-#svc = SVC()
+svc = SVC()
 sgd = SGDClassifier()
 log_loss=SGDClassifier(loss='log_loss')
 
 gnb.fit(X_train, y_train)
 mnb.fit(X_train, y_train)
+svc.fit(X_train,y_train)
 sgd.fit(X_train, y_train)
-#svc.fit(X_train,y_train)
 log_loss.fit(X_train,y_train)
 
 
 # Making Predictions
 gnb_pred = gnb.predict(X_test)
 mnb_pred = mnb.predict(X_test)
+svc_pred = svc.predict(X_test)
 sgd_pred = sgd.predict(X_test)
-#svc_pred = svc.predict(X_test)
 ll_pred = log_loss.predict(X_test)
 
 
 gnb_score = np.count_nonzero(y_test==gnb_pred)/len(y_test)
 mnb_score = np.count_nonzero(y_test==mnb_pred)/len(y_test)
+svc_score = np.count_nonzero(y_test==svc_pred)/len(y_test)
 sgd_score = np.count_nonzero(y_test==sgd_pred)/len(y_test)
-#svc_score = np.count_nonzero(y_test==svc_pred)/len(y_test)
 lL_score = np.count_nonzero(y_test==ll_pred)/len(y_test)
+
 
 print("Gaussian NB has "+str(gnb_score*100)+"%")
 print("Multinomial NB has "+str(mnb_score*100)+"%")
-print("svm with sgd has "+str(sgd_score*100)+"%")
-print("log_loss with SGD has "+str(lL_score*100)+"%")
+print("svc (without SGD) has "+str(sgd_score*100)+"%")
+print("svm with SGD has "+str(svc_score*100)+"%")
+print("LogReg with SGD has "+str(lL_score*100)+"%")
 
+def addlabels(x,y):
+    for i in range(len(x)):
+        plt.text(i,y[i],y[i])
+
+
+Nclass= len(df['medical_specialty'].unique())
+x_=['Gaussian NB','Multinomial NB','svm','svm with sgd','LogReg with SGD']
+scores=[gnb_score,mnb_score,svc_score,sgd_score,lL_score]
+scores = [round(i * 100,2) for i in scores]
+plt.bar(x_,scores)
+addlabels(x_,scores)
+plt.grid(color='k', linestyle='--', linewidth=0.2)
+plt.suptitle('Classifying '+str(Nclass)+' specialities from '+str(len(df))+' samples')
+plt.ylabel('True positives', fontsize=16)
+plt.show()
 dum=1
 
